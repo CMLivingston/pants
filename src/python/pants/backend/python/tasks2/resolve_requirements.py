@@ -5,7 +5,8 @@
 from __future__ import (absolute_import, division, generators, nested_scopes, print_function,
                         unicode_literals, with_statement)
 
-from pants.backend.python.tasks2.pex_build_util import has_python_requirements, has_python_and_c_sources
+from pants.backend.python.tasks2.pex_build_util import (has_python_and_c_sources,
+                                                        has_python_requirements)
 from pants.backend.python.tasks2.resolve_requirements_task_base import ResolveRequirementsTaskBase
 
 
