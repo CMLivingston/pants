@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, generators, nested_scopes, print_function,
                         unicode_literals, with_statement)
 
-from pants.backend.python.tasks2.pex_build_util import has_python_requirements
+from pants.backend.python.tasks2.pex_build_util import has_python_requirements, has_python_and_c_sources
 from pants.backend.python.tasks2.resolve_requirements_task_base import ResolveRequirementsTaskBase
 
 
@@ -19,5 +19,6 @@ class ResolveRequirements(ResolveRequirementsTaskBase):
 
   def execute(self):
     req_libs = self.context.targets(has_python_requirements)
-    pex = self.resolve_requirements(req_libs)
+    python_dist_targets = self.context.targets(has_python_and_c_sources)
+    pex = self.resolve_requirements(req_libs, python_dist_targets=python_dist_targets)
     self.context.products.register_data(self.REQUIREMENTS_PEX, pex)
