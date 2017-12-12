@@ -34,7 +34,7 @@ def build_file_aliases():
   return BuildFileAliases(
     targets={
       PythonBinary.alias(): TargetMacro.Factory.wrap(PythonBinary.create, PythonBinary),
-      'python_dist': PythonDistribution,
+      PythonDistribution.alias(): PythonDistribution,
       PythonLibrary.alias(): TargetMacro.Factory.wrap(PythonLibrary.create, PythonLibrary),
       PythonTests.alias(): TargetMacro.Factory.wrap(PythonTests.create, PythonTests),
       'python_requirement_library': PythonRequirementLibrary,
