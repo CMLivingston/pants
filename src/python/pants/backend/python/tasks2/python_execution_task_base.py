@@ -104,8 +104,8 @@ class PythonExecutionTaskBase(ResolveRequirementsTaskBase):
   def create_pex(self, pex_info=None):
     """Returns a wrapped pex that "merges" the other pexes via PEX_PATH."""
     relevant_targets = self.context.targets(
-      lambda tgt: isinstance(tgt, (PythonDistribution,
-        PythonRequirementLibrary, PythonTarget, Files)))
+      lambda tgt: isinstance(tgt, (
+        PythonDistribution, PythonRequirementLibrary, PythonTarget, Files)))
     with self.invalidated(relevant_targets) as invalidation_check:
 
       # If there are no relevant targets, we still go through the motions of resolving
