@@ -17,8 +17,8 @@ from pants.backend.python.targets.python_distribution import PythonDistribution
 from pants.backend.python.targets.python_requirement_library import PythonRequirementLibrary
 from pants.backend.python.targets.python_target import PythonTarget
 from pants.backend.python.tasks2.gather_sources import GatherSources
-from pants.backend.python.tasks2.pex_build_util import (is_local_python_dist,
-                                                        targets_are_invalid_targets)
+from pants.backend.python.tasks2.pex_build_util import (has_python_sources, is_local_python_dist,
+                                                        targets_are_invalid)
 from pants.backend.python.tasks2.resolve_requirements import ResolveRequirements
 from pants.backend.python.tasks2.resolve_requirements_task_base import ResolveRequirementsTaskBase
 from pants.build_graph.address import Address
@@ -127,7 +127,7 @@ class PythonExecutionTaskBase(ResolveRequirementsTaskBase):
       invalid_targets = [vt.target for vt in invalidation_check.invalid_vts]
       # Note that we check for the existence of the directory, instead of for invalid_vts,
       # to cover the empty case.
-      if not os.path.isdir(path) or targets_are_invalid_targets(python_dist_targets, invalid_targets):
+      if not os.path.isdir(path) or targets_are_invalid(python_dist_targets, invalid_targets):
         pexes = [
           self.context.products.get_data(ResolveRequirements.REQUIREMENTS_PEX),
           self.context.products.get_data(GatherSources.PYTHON_SOURCES)
