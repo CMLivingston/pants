@@ -114,23 +114,21 @@ function ensure_native_build_prerequisites() {
   fi
 
   local download_binary="${REPO_ROOT}/build-support/bin/download_binary.sh"
-  local readonly cmakeroot="$("${download_binary}" "cmake" "3.9.5" "cmake.tar.gz")" || die "Failed to fetch cmake"
-  local readonly goroot="$("${download_binary}" "go" "1.7.3" "go.tar.gz")/go" || die "Failed to fetch go"
+  local readonly cmakeroot="$("${download_binary}" "binaries.pantsbuild.org" "cmake" "3.9.5" "cmake.tar.gz")" || die "Failed to fetch cmake"
+  local readonly goroot="$("${download_binary}" "binaries.pantsbuild.org" "go" "1.7.3" "go.tar.gz")/go" || die "Failed to fetch go"
 
   export GOROOT="${goroot}"
   export EXTRA_PATH_FOR_CARGO="${cmakeroot}/bin:${goroot}/bin"
 }
 
-# Echos directories to add to $PATH.
-function prepare_to_build_native_code() {
-  # Must happen in the pants venv and have PANTS_SRCPATH set.
-
-  ensure_native_build_prerequisites || die
-  _ensure_cffi_sources || die
-}
-
 function run_cargo() {
-  prepare_to_build_native_code || die
+  # Exports $EXTRA_PATH_FOR_CARGO which should be put on the $PATH
+  ensure_native_build_prerequisites || die
+
+  if [[ "${ensure_cffi_sources}" == "1" ]]; then
+    # Must happen in the pants venv and have PANTS_SRCPATH set.
+    _ensure_cffi_sources || die
+  fi
 
   local readonly cargo="${CARGO_HOME}/bin/cargo"
   # We change to the ${REPO_ROOT} because if we're not in a subdirectory of it, .cargo/config isn't picked up.
@@ -157,7 +155,7 @@ function _wait_noisily() {
 function _build_native_code() {
   # Builds the native code, and echos the path of the built binary.
 
-  run_cargo build ${MODE_FLAG} --manifest-path ${NATIVE_ROOT}/Cargo.toml || die
+  ensure_cffi_sources=1 run_cargo build ${MODE_FLAG} --manifest-path ${NATIVE_ROOT}/Cargo.toml || die
   echo "${NATIVE_ROOT}/target/${MODE}/libengine.${LIB_EXTENSION}"
 }
 

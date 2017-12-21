@@ -113,6 +113,7 @@ class PantsDaemon(FingerprintedProcessManager):
       return EngineInitializer.setup_legacy_graph(
         bootstrap_options.pants_ignore,
         bootstrap_options.pants_workdir,
+        bootstrap_options.build_file_imports,
         native=native,
         build_ignore_patterns=bootstrap_options.build_ignore,
         exclude_target_regexps=bootstrap_options.exclude_target_regexp,
@@ -163,8 +164,12 @@ class PantsDaemon(FingerprintedProcessManager):
 
     self._log_dir = os.path.join(work_dir, self.name)
     self._logger = logging.getLogger(__name__)
-    # A lock to guard the service thread lifecycles.
-    self._lock = threading.RLock()
+    # A lock to guard the service thread lifecycles. This can be used by individual services
+    # to safeguard daemon-synchronous sections that should be protected from abrupt teardown.
+    self._lifecycle_lock = threading.RLock()
+    # A lock to guard pantsd->runner forks. This can be used by services to safeguard resources
+    # held by threads at fork time, so that we can fork without deadlocking.
+    self._fork_lock = threading.RLock()
     # N.B. This Event is used as nothing more than a convenient atomic flag - nothing waits on it.
     self._kill_switch = threading.Event()
     self._exiter = Exiter()
@@ -188,11 +193,11 @@ class PantsDaemon(FingerprintedProcessManager):
 
   def shutdown(self, service_thread_map):
     """Gracefully terminate all services and kill the main PantsDaemon loop."""
-    with self._lock:
+    with self._lifecycle_lock:
       for service, service_thread in service_thread_map.items():
         self._logger.info('terminating pantsd service: {}'.format(service))
         service.terminate()
-        service_thread.join()
+        service_thread.join(self.JOIN_TIMEOUT_SECONDS)
       self._logger.info('terminating pantsd')
       self._kill_switch.set()
 
@@ -222,10 +227,17 @@ class PantsDaemon(FingerprintedProcessManager):
     return result.log_stream
 
   def _setup_services(self, services):
-    assert self._lock is not None, 'PantsDaemon lock has not been set!'
+    assert self._lifecycle_lock is not None, 'PantsDaemon lock has not been set!'
+    assert self._fork_lock is not None, 'PantsDaemon fork lock has not been set!'
     for service in services:
       self._logger.info('setting up service {}'.format(service))
-      service.setup(self._lock)
+      service.setup(self._lifecycle_lock, self._fork_lock)
+
+  @staticmethod
+  def _make_thread(target):
+    t = threading.Thread(target=target)
+    t.daemon = True
+    return t
 
   def _run_services(self, services):
     """Service runner main loop."""
@@ -233,7 +245,7 @@ class PantsDaemon(FingerprintedProcessManager):
       self._logger.critical('no services to run, bailing!')
       return
 
-    service_thread_map = {service: threading.Thread(target=service.run) for service in services}
+    service_thread_map = {service: self._make_thread(service.run) for service in services}
 
     # Start services.
     for service, service_thread in service_thread_map.items():
@@ -308,8 +320,8 @@ class PantsDaemon(FingerprintedProcessManager):
         self.terminate(include_watchman=False)
         self._logger.debug('launching pantsd')
         self.daemon_spawn()
-        # Wait up to 10 seconds for pantsd to write its pidfile so we can display the pid to the user.
-        self.await_pid(10)
+        # Wait up to 60 seconds for pantsd to write its pidfile.
+        self.await_pid(60)
       listening_port = self.read_named_socket('pailgun', int)
       pantsd_pid = self.pid
     self._logger.debug('released lock: {}'.format(self.process_lock))
