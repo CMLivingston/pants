@@ -127,7 +127,7 @@ class PythonExecutionTaskBase(ResolveRequirementsTaskBase):
       invalid_targets = [vt.target for vt in invalidation_check.invalid_vts]
       # Note that we check for the existence of the directory, instead of for invalid_vts,
       # to cover the empty case.
-      if not os.path.isdir(path) or targets_are_invalid(python_dist_targets, invalid_targets):
+      if not os.path.isdir(path):
         pexes = [
           self.context.products.get_data(ResolveRequirements.REQUIREMENTS_PEX),
           self.context.products.get_data(GatherSources.PYTHON_SOURCES)
