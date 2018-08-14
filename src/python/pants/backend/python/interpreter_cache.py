@@ -81,7 +81,7 @@ class PythonInterpreterCache(object):
     if self._python_setup.get_options().is_flagged('interpreter_constraints'):
       # Pants will append the CLI-supplied constraints after the pants.ini constraints by default
       # and we want to take only the CLI-supplied constraints in this case.
-      filters.add(self._python_setup.get_options().interpreter_constraints)
+      filters.update(self._python_setup.get_options().interpreter_constraints)
     else:
       for target in targets:
         if isinstance(target, PythonTarget):
@@ -160,6 +160,7 @@ class PythonInterpreterCache(object):
     # We filter the interpreter cache itself (and not just the interpreters we pull from it)
     # because setting up some python versions (e.g., 3<=python<3.3) crashes, and this gives us
     # an escape hatch.
+    filters = filters if any(filters) else self._python_setup.interpreter_constraints
     setup_paths = (paths
                    or self.pex_python_paths()
                    or self._python_setup.interpreter_search_paths
@@ -170,7 +171,6 @@ class PythonInterpreterCache(object):
 
     def unsatisfied_filters(interpreters):
       return [f for f in filters if len(list(self._matching(interpreters, [f]))) == 0]
-    import pdb;pdb.set_trace()
     interpreters = []
     with OwnerPrintingInterProcessFileLock(path=os.path.join(self._cache_dir, '.file_lock')):
       interpreters.extend(self._setup_cached(filters))
