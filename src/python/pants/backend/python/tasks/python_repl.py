@@ -52,7 +52,7 @@ class PythonRepl(ReplTaskMixin, PythonExecutionTaskBase):
     python_setup = PythonSetup.global_instance()
     if python_setup.get_options().is_flagged('interpreter_constraints'):
       setup_constraints = python_setup.interpreter_constraints
-      pex_info.add_interpreter_constraint(setup_constraints[-1])
+      pex_info.add_interpreter_constraint(setup_constraints)
     return self.create_pex(pex_info)
 
   # N.B. **pex_run_kwargs is used by tests only.

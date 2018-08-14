@@ -81,7 +81,7 @@ class PythonInterpreterCache(object):
     if self._python_setup.get_options().is_flagged('interpreter_constraints'):
       # Pants will append the CLI-supplied constraints after the pants.ini constraints by default
       # and we want to take only the CLI-supplied constraints in this case.
-      filters.add(self._python_setup.get_options().interpreter_constraints[-1])
+      filters.add(self._python_setup.get_options().interpreter_constraints)
     else:
       for target in targets:
         if isinstance(target, PythonTarget):
@@ -170,7 +170,7 @@ class PythonInterpreterCache(object):
 
     def unsatisfied_filters(interpreters):
       return [f for f in filters if len(list(self._matching(interpreters, [f]))) == 0]
-
+    import pdb;pdb.set_trace()
     interpreters = []
     with OwnerPrintingInterProcessFileLock(path=os.path.join(self._cache_dir, '.file_lock')):
       interpreters.extend(self._setup_cached(filters))
