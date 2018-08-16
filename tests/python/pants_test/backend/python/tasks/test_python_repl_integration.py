@@ -15,7 +15,6 @@ class PythonReplIntegrationTest(PantsRunIntegrationTest):
     command = ['repl',
                'testprojects/src/python/interpreter_selection:echo_interpreter_version_lib',
                '--python-setup-interpreter-constraints=CPython>=2.7,<3',
-               '--python-setup-interpreter-constraints=CPython>=3.3',
                '--quiet']
     program = 'from interpreter_selection.echo_interpreter_version import say_hello; say_hello()'
     pants_run = self.run_pants(command=command, stdin_data=program)
@@ -27,7 +26,7 @@ class PythonReplIntegrationTest(PantsRunIntegrationTest):
     # Run a Python 2 repl on a Python 2/3 library target.
     command = ['repl',
               'testprojects/src/python/interpreter_selection:echo_interpreter_version_lib',
-              '--python-setup-interpreter-constraints=CPython<3',
+              '--python-setup-interpreter-constraints=["CPython<3"]',
               '--quiet']
     program = 'from interpreter_selection.echo_interpreter_version import say_hello; say_hello()'
     pants_run = self.run_pants(command=command, stdin_data=program)
@@ -39,7 +38,7 @@ class PythonReplIntegrationTest(PantsRunIntegrationTest):
     # Run a Python 3 repl on a Python 2/3 library target. Avoid some known-to-choke-on interpreters.
       command = ['repl',
                 'testprojects/src/python/interpreter_selection:echo_interpreter_version_lib',
-                '--python-setup-interpreter-constraints=CPython>=3.3',
+                '--python-setup-interpreter-constraints=["CPython>=3.3"]',
                 '--quiet']
       program = 'from interpreter_selection.echo_interpreter_version import say_hello; say_hello()'
       pants_run = self.run_pants(command=command, stdin_data=program)
